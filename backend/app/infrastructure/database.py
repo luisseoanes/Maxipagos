@@ -4,7 +4,10 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+import pathlib
+
+_ENV_PATH = pathlib.Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(dotenv_path=_ENV_PATH)
 
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./maxipagos.db")
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):

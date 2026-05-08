@@ -9,18 +9,26 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import os
+import pathlib
 import shutil
 from datetime import datetime, timedelta
 from fpdf import FPDF
 from io import BytesIO
 from dotenv import load_dotenv
 
+# Resolve absolute paths so it works from any working directory (Railway, local, etc.)
+BACKEND_DIR = pathlib.Path(__file__).resolve().parent
+PROJECT_DIR = BACKEND_DIR.parent
+
+import sys
+sys.path.insert(0, str(BACKEND_DIR))
+
 from app.infrastructure import database
 from app.domain import models
 from app.schemas import schemas
 from app.core import security
 
-load_dotenv()
+load_dotenv(dotenv_path=BACKEND_DIR / ".env")
 
 # Create database tables
 models.Base.metadata.create_all(bind=database.engine)
@@ -50,10 +58,11 @@ app.add_middleware(
     https_only=False
 )
 
-# Directories setup
-os.makedirs("uploads", exist_ok=True)
-app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
-templates = Jinja2Templates(directory="frontend/templates")
+# Directories setup (absolute paths)
+UPLOADS_DIR = PROJECT_DIR / "uploads"
+os.makedirs(str(UPLOADS_DIR), exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(PROJECT_DIR / "frontend" / "static")), name="static")
+templates = Jinja2Templates(directory=str(PROJECT_DIR / "frontend" / "templates"))
 
 def log_action(db: Session, user_id: int, action: str, details: str):
     db.add(models.AuditLog(user_id=user_id, action=action, details=details))
@@ -402,7 +411,7 @@ async def update_quota(id: int, update: schemas.QuotaUpdate, request: Request, d
 async def upload_attachment(id: int, request: Request, label: str = Form(...), file: UploadFile = File(...), db: Session = Depends(database.get_db)):
     user_id = request.session.get("user_id")
     if not user_id: raise HTTPException(status_code=401)
-    file_path = os.path.join("uploads", f"{id}_{file.filename}")
+    file_path = str(UPLOADS_DIR / f"{id}_{file.filename}")
     with open(file_path, "wb") as buffer: shutil.copyfileobj(file.file, buffer)
     db_attachment = models.Attachment(loan_id=id, filename=f"{id}_{file.filename}", label=label)
     db.add(db_attachment)
