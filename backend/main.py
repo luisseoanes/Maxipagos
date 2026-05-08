@@ -63,30 +63,32 @@ def log_action(db: Session, user_id: int, action: str, details: str):
 
 @app.get("/")
 async def index(request: Request):
-    if not request.session.get("user_id"):
-        return RedirectResponse(url="/login")
+    if request.session.get("user_id"):
+        return RedirectResponse(url="/admin")
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/login")
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+@app.get("/admin")
+async def admin_page(request: Request):
+    if not request.session.get("user_id"):
+        return RedirectResponse(url="/")
+    return templates.TemplateResponse("admin.html", {"request": request})
 
 @app.post("/login")
 @limiter.limit("5/minute")
 async def login(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(database.get_db)):
     user = db.query(models.User).filter(models.User.username == username).first()
     if not user or not security.verify_password(password, user.hashed_password):
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Credenciales inválidas"})
+        return templates.TemplateResponse("index.html", {"request": request, "error": "Credenciales inválidas"})
     
     request.session["user_id"] = user.id
     request.session["username"] = user.username
     request.session["role"] = user.role
-    return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url="/admin", status_code=status.HTTP_303_SEE_OTHER)
 
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()
-    return RedirectResponse(url="/login")
+    return RedirectResponse(url="/")
 
 # --- API ENDPOINTS ---
 
