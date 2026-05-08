@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaxiPagos - Iniciar Sesión</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <h1>MaxiPagos</h1>
+            <p>Sistema Profesional de Gestión Crediticia</p>
+            
+            {% if error %}
+            <div style="background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 2rem; text-align: center; font-size: 0.85rem; border: 1px solid #fecaca;">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form action="/login" method="post">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" name="username" placeholder="Ingrese su usuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" style="background: #1e293b;">Acceder al Sistema</button>
+            </form>
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">¿Eres cliente?</p>
+                <a href="/consultar" class="btn-outline" style="display: block; text-decoration: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; background: white; border: 2px solid #1e293b; color: #1e293b;">Consultar mi Crédito</a>
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #f1f5f9; text-align: center;">
+                <p style="font-size: 0.75rem;">Acceso restringido a personal autorizado.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

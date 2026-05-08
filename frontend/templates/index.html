@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaxiPagos - Sistema Profesional</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=2.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        window.userRole = "{{ request.session.role }}";
+    </script>
+</head>
+<body>
+    <div class="dashboard">
+        <aside>
+            <div class="logo">
+                <i data-lucide="shield-check"></i>
+                MaxiPagos
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active" onclick="showSection('overview')"><i data-lucide="layout-dashboard" style="width: 18px; margin-right: 10px;"></i> Resumen</a></li>
+                    <li><a href="#" onclick="showSection('clients')"><i data-lucide="users" style="width: 18px; margin-right: 10px;"></i> Clientes</a></li>
+                    <li><a href="#" onclick="showSection('loans')"><i data-lucide="landmark" style="width: 18px; margin-right: 10px;"></i> Préstamos</a></li>
+                    <li><a href="#" onclick="showSection('audit')"><i data-lucide="shield" style="width: 18px; margin-right: 10px;"></i> Auditoría</a></li>
+                    <li><a href="#" onclick="showSection('expenses')"><i data-lucide="receipt" style="width: 18px; margin-right: 10px;"></i> Gastos</a></li>
+                    <li id="nav-investors"><a href="#" onclick="showSection('investors')"><i data-lucide="briefcase" style="width: 18px; margin-right: 10px;"></i> Inversionistas</a></li>
+                    <li><a href="/logout" style="color: #fca5a5; margin-top: 3rem;"><i data-lucide="log-out" style="width: 18px; margin-right: 10px;"></i> Cerrar Sesión</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main>
+            <header>
+                <h2 id="section-title">Resumen Financiero</h2>
+                <div class="actions">
+                    <button onclick="window.location='/api/reports/export'" class="btn-outline" style="width: auto; padding: 0.6rem 1.2rem;">Exportar Excel</button>
+                    <button onclick="openModal('client-modal')" style="width: auto; padding: 0.6rem 1.2rem;">+ Cliente</button>
+                    <button onclick="openModal('loan-modal')" class="btn-accent" style="width: auto; padding: 0.6rem 1.2rem;">+ Préstamo</button>
+                </div>
+            </header>
+
+            <section id="overview-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Clientes</h3>
+                        <div class="value" id="stat-clients" style="color: var(--accent);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Capital Prestado</h3>
+                        <div class="value" id="stat-lent" style="color: var(--text-muted);">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Cartera en Mora</h3>
+                        <div class="value" id="stat-mora" style="color: var(--danger);">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Utilidad Neta</h3>
+                        <div class="value" id="stat-profit" style="color: var(--success);">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Gastos Totales</h3>
+                        <div class="value" id="stat-expenses" style="color: var(--text-muted);">$0</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="chart-container">
+                        <h3 style="margin-bottom: 1.5rem; color: var(--text-muted);">Proyección de Cobros (6 meses)</h3>
+                        <canvas id="earningsChart" height="100"></canvas>
+                    </div>
+                    <div class="chart-container" id="profitability-chart-container">
+                        <h3 style="margin-bottom: 1.5rem; color: var(--text-muted);">Ingresos vs Gastos (6 meses)</h3>
+                        <canvas id="profitChart" height="100"></canvas>
+                    </div>
+                </div>
+
+                <h3>Préstamos Recientes</h3>
+                <div style="margin-top: 1rem; overflow-x: auto;">
+                    <table class="data-table" id="recent-loans-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Monto</th>
+                                <th>Interés</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="client-detail-section" style="display: none;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                    <button onclick="showSection('overview')" class="btn-outline" style="width: auto; padding: 0.4rem 0.8rem;">← Volver</button>
+                    <h3 id="detail-client-name">Nombre del Cliente</h3>
+                </div>
+                <div id="loan-history"></div>
+            </section>
+
+            <section id="clients-section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <h3>Lista de Clientes</h3>
+                    <input type="text" id="search-client" placeholder="Buscar cliente..." onkeyup="filterClients()" style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border);">
+                </div>
+                <div style="margin-top: 1rem; overflow-x: auto;">
+                    <table class="data-table" id="clients-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Teléfono</th>
+                                <th>Email</th>
+                                <th>Dirección</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="loans-section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <h3>Todos los Préstamos</h3>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="search-loan" placeholder="Buscar ID o Cliente..." onkeyup="filterLoans()" style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border);">
+                        <select id="filter-loan-status" onchange="filterLoans()" style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border);">
+                            <option value="all">Todos</option>
+                            <option value="active">Activos</option>
+                            <option value="paid">Pagados</option>
+                            <option value="late">En Mora 🔴</option>
+                            <option value="today">Vencen Hoy 🕒</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; overflow-x: auto;">
+                    <table class="data-table" id="loans-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Monto</th>
+                                <th>Tasa</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="expenses-section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3>Control de Gastos</h3>
+                    <button onclick="openModal('expense-modal')" class="btn-outline" style="width: auto; padding: 0.4rem 0.8rem;">+ Gasto</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="expenses-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="audit-section" style="display: none;">
+                <h3>Registro de Auditoría</h3>
+                <div style="margin-top: 1rem; overflow-x: auto;">
+                    <table class="data-table" id="audit-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Acción</th>
+                                <th>Detalles</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="investors-section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3>Gestión de Inversionistas</h3>
+                    <button onclick="openModal('investor-modal')" class="btn-outline" style="width: auto; padding: 0.4rem 0.8rem;">+ Inversionista</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="investors-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Teléfono</th>
+                                <th>Capital Disponible</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div id="client-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nuevo Cliente</h3>
+                <span class="close-btn" onclick="closeModal('client-modal')">&times;</span>
+            </div>
+            <form id="client-form">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Cédula / ID</label>
+                    <input type="text" name="cedula" required>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="text" name="phone">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email">
+                </div>
+                <div class="form-group">
+                    <label>Dirección</label>
+                    <input type="text" name="address">
+                </div>
+                <hr style="margin: 1rem 0; border: 0; border-top: 1px solid var(--border);">
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Credenciales de Acceso (Opcional para el cliente)</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Usuario</label>
+                        <input type="text" name="username">
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <input type="password" name="password">
+                    </div>
+                </div>
+                <button type="submit">Guardar Cliente</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="loan-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nuevo Préstamo</h3>
+                <span class="close-btn" onclick="closeModal('loan-modal')">&times;</span>
+            </div>
+            <form id="loan-form">
+                <div class="form-group">
+                    <label>Seleccionar Cliente</label>
+                    <select name="client_id" id="client-select" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Inversionista (Quién pone el dinero)</label>
+                    <select name="investor_id" id="investor-select">
+                        <option value="">Negocio (Propio)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Monto Principal ($)</label>
+                    <input type="number" name="amount" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Tasa %</label>
+                        <input type="number" step="0.1" name="interest_rate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Meses</label>
+                        <input type="number" name="duration_months" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mora/Día ($)</label>
+                        <input type="number" step="0.01" name="late_fee_per_day" value="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Interés</label>
+                    <select name="interest_type">
+                        <option value="fixed">Fijo (Capital + Interés / Meses)</option>
+                        <option value="reducing">Saldo (Amortización Francesa)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-accent">Crear Préstamo Profesional</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Registrar Pago</h3>
+                <span class="close-btn" onclick="closeModal('payment-modal')">&times;</span>
+            </div>
+            <form id="payment-form">
+                <input type="hidden" name="loan_id" id="payment-loan-id">
+                <div class="form-group">
+                    <label>Monto a Pagar ($)</label>
+                    <input type="number" step="0.01" name="amount" id="payment-suggested-amount" required>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" name="is_abono_capital" id="is_abono_capital" value="true" style="width: auto;">
+                    <label for="is_abono_capital" style="margin-bottom: 0;">Es abono a capital (Reduce el saldo total)</label>
+                </div>
+                <button type="submit">Confirmar Pago</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="quota-edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Modificar Cuota</h3>
+                <span class="close-btn" onclick="closeModal('quota-edit-modal')">&times;</span>
+            </div>
+            <form id="quota-edit-form">
+                <input type="hidden" id="edit-quota-id">
+                <div class="form-group">
+                    <label>Nuevo Monto ($)</label>
+                    <input type="number" step="0.01" id="edit-quota-amount" required>
+                </div>
+                <div class="form-group">
+                    <label>Nueva Fecha</label>
+                    <input type="date" id="edit-quota-date" required>
+                </div>
+                <button type="submit">Actualizar Cuota</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="attachment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adjuntar Documento</h3>
+                <span class="close-btn" onclick="closeModal('attachment-modal')">&times;</span>
+            </div>
+            <form id="attachment-form">
+                <input type="hidden" id="attachment-loan-id">
+                <div class="form-group">
+                    <label>Descripción (Ej: Contrato, ID)</label>
+                    <input type="text" id="attachment-label" required>
+                </div>
+                <div class="form-group">
+                    <label>Seleccionar Archivo</label>
+                    <input type="file" id="attachment-file" required>
+                </div>
+                <button type="submit" class="btn-accent">Cargar Documento</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="expense-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Registrar Gasto</h3>
+                <span class="close-btn" onclick="closeModal('expense-modal')">&times;</span>
+            </div>
+            <form id="expense-form">
+                <div class="form-group">
+                    <label>Descripción del Gasto</label>
+                    <input type="text" name="description" required>
+                </div>
+                <div class="form-group">
+                    <label>Monto ($)</label>
+                    <input type="number" step="0.01" name="amount" required>
+                </div>
+                <button type="submit">Guardar Gasto</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="investor-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nuevo Inversionista</h3>
+                <span class="close-btn" onclick="closeModal('investor-modal')">&times;</span>
+            </div>
+            <form id="investor-form">
+                <div class="form-group">
+                    <label>Nombre del Inversionista</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" name="phone">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Capital Inicial ($)</label>
+                    <input type="number" step="0.01" name="balance" value="0">
+                </div>
+                <hr style="margin: 1rem 0; border: 0; border-top: 1px solid var(--border);">
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Credenciales de Acceso (Opcional)</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Usuario</label>
+                        <input type="text" name="username">
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <input type="password" name="password">
+                    </div>
+                </div>
+                <button type="submit" class="btn-accent">Registrar Inversionista</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
