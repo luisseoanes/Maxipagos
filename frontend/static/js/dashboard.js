@@ -118,10 +118,12 @@ async function refreshData() {
 }
 
 async function updateStats() {
-    const res = await fetch('/api/dashboard-stats');
-    const data = await res.json();
-    
-    if (data.role === 'client') {
+    try {
+        const res = await fetch('/api/dashboard-stats');
+        if (!res.ok) throw new Error('API Error');
+        const data = await res.json();
+        
+        if (data.role === 'client') {
         document.getElementById('section-title').textContent = `Bienvenido, ${data.client_name}`;
         const grid = document.querySelector('.stats-grid');
         grid.innerHTML = `
@@ -139,6 +141,9 @@ async function updateStats() {
         if (document.getElementById('stat-expenses')) document.getElementById('stat-expenses').textContent = `$${data.total_expenses.toLocaleString()}`;
         updateChart(data.projections);
         updateProfitChart(data.profitability_trend);
+    }
+    } catch (err) {
+        console.error("Error cargando estadísticas:", err);
     }
 }
 

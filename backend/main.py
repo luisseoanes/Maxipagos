@@ -137,10 +137,14 @@ async def get_stats(request: Request, db: Session = Depends(database.get_db)):
     
     today = datetime.utcnow()
     pending_quotas = db.query(models.Quota).filter(models.Quota.status != "paid", models.Quota.due_date < today)
+    total_mora = 0
     if role == "investor":
-        pending_quotas = pending_quotas.join(models.Loan).filter(models.Loan.investor_id == investor.id)
-    
-    total_mora = sum(q.amount - q.paid_amount for q in pending_quotas.all())
+        investor = db.query(models.Investor).filter(models.Investor.user_id == user_id).first()
+        if investor:
+            pending_quotas = pending_quotas.join(models.Loan).filter(models.Loan.investor_id == investor.id)
+            total_mora = sum(q.amount - q.paid_amount for q in pending_quotas.all())
+    else:
+        total_mora = sum(q.amount - q.paid_amount for q in pending_quotas.all())
     
     if role == "admin":
         expenses = db.query(models.Expense).all()
@@ -162,7 +166,10 @@ async def get_stats(request: Request, db: Session = Depends(database.get_db)):
         
         # Projections
         p_query = db.query(models.Quota).filter(models.Quota.due_date >= curr_date, models.Quota.due_date < month_end)
-        if role == "investor": p_query = p_query.join(models.Loan).filter(models.Loan.investor_id == investor.id)
+        if role == "investor":
+            investor = db.query(models.Investor).filter(models.Investor.user_id == user_id).first()
+            if investor:
+                p_query = p_query.join(models.Loan).filter(models.Loan.investor_id == investor.id)
         month_total = sum(q.amount for q in p_query.all())
         projections.append({"month": curr_date.strftime("%b"), "amount": month_total})
         
