@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+function toggleSidebar() {
+    const aside = document.querySelector('aside');
+    const overlay = document.querySelector('.sidebar-overlay');
+    aside.classList.toggle('open');
+    overlay.classList.toggle('show');
+}
+
 function applyRoleRestrictions() {
     if (window.userRole === 'investor' || window.userRole === 'client') {
         // Hide admin sections from sidebar
@@ -230,10 +237,10 @@ async function updateClientsList() {
     select.innerHTML = '<option value="">Seleccione un cliente...</option>';
     clients.forEach(c => {
         tbody.innerHTML += `<tr>
-            <td>${c.name}</td>
-            <td>${c.phone || '-'} <button onclick="shareWhatsApp('${c.name}', '${c.phone}', 0, 'general')" style="background:none; border:none; color:#25d366; cursor:pointer; padding:0;"><i data-lucide="message-circle" style="width:14px;"></i></button></td>
-            <td>${c.email || '-'}</td>
-            <td>${c.address || '-'}</td>
+            <td data-label="Nombre">${c.name}</td>
+            <td data-label="Teléfono">${c.phone || '-'} <button onclick="shareWhatsApp('${c.name}', '${c.phone}', 0, 'general')" style="background:none; border:none; color:#25d366; cursor:pointer; padding:0;"><i data-lucide="message-circle" style="width:14px;"></i></button></td>
+            <td data-label="Email">${c.email || '-'}</td>
+            <td data-label="Dirección">${c.address || '-'}</td>
         </tr>`;
         select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
     });
@@ -251,11 +258,11 @@ async function updateLoansList() {
     loans.forEach(l => {
         const row = `
             <tr>
-                <td><a href="#" onclick="showClientDetail(${l.client_id})" style="color: #2563eb; font-weight: 600;">${l.client_name}</a></td>
-                <td>$${l.amount.toLocaleString()}</td>
-                <td>${l.interest_rate}%</td>
-                <td><span class="status-badge status-${l.status}">${l.status.toUpperCase()}</span></td>
-                <td>
+                <td data-label="Cliente"><a href="#" onclick="showClientDetail(${l.client_id})" style="color: #2563eb; font-weight: 600;">${l.client_name}</a></td>
+                <td data-label="Monto">$${l.amount.toLocaleString()}</td>
+                <td data-label="Interés">${l.interest_rate}%</td>
+                <td data-label="Estado"><span class="status-badge status-${l.status}">${l.status.toUpperCase()}</span></td>
+                <td data-label="Acción">
                     <div style="display: flex; gap: 0.3rem;">
                         ${window.userRole === 'admin' ? `<button onclick="openPaymentModal(${l.id}, ${l.amount * (l.interest_rate/100)})" style="padding: 0.3rem 0.5rem; width: auto;">Pagar</button>` : ''}
                         <button onclick="downloadContract(${l.id})" class="btn-outline" style="padding: 0.3rem 0.5rem; width: auto;">Contrato</button>
@@ -265,12 +272,12 @@ async function updateLoansList() {
         overviewTbody.innerHTML += row;
         allLoansTbody.innerHTML += `
             <tr data-status="${l.status}" data-late="${l.is_late}" data-today="${l.due_today}">
-                <td>${l.id}</td>
-                <td>${l.client_name} ${l.is_late ? '🔴' : ''}</td>
-                <td>$${l.amount.toLocaleString()}</td>
-                <td>${l.interest_rate}%</td>
-                <td><span class="status-badge status-${l.status}">${l.status.toUpperCase()}</span></td>
-                <td>
+                <td data-label="ID">${l.id}</td>
+                <td data-label="Cliente">${l.client_name} ${l.is_late ? '🔴' : ''}</td>
+                <td data-label="Monto">$${l.amount.toLocaleString()}</td>
+                <td data-label="Tasa">${l.interest_rate}%</td>
+                <td data-label="Estado"><span class="status-badge status-${l.status}">${l.status.toUpperCase()}</span></td>
+                <td data-label="Acción">
                     <button onclick="downloadContract(${l.id})" class="btn-outline" style="padding: 0.2rem 0.4rem; width: auto; font-size: 0.7rem;">Contrato</button>
                 </td>
             </tr>`;
@@ -283,7 +290,7 @@ async function updateAuditLogs() {
     const tbody = document.querySelector('#audit-table tbody');
     tbody.innerHTML = '';
     logs.forEach(log => {
-        tbody.innerHTML += `<tr><td>${log.time}</td><td><span style="font-weight: 700;">${log.action}</span></td><td>${log.details}</td></tr>`;
+        tbody.innerHTML += `<tr><td data-label="Fecha">${log.time}</td><td data-label="Acción"><span style="font-weight: 700;">${log.action}</span></td><td data-label="Detalles">${log.details}</td></tr>`;
     });
 }
 
@@ -420,13 +427,13 @@ async function updateInvestorsList() {
         
         tbody.innerHTML += `
             <tr>
-                <td>${i.name}</td>
-                <td style="font-size:0.85rem;">
+                <td data-label="Nombre">${i.name}</td>
+                <td data-label="Métricas" style="font-size:0.85rem;">
                     Cap. Prestado: <strong>$${h.total_capital_lent.toLocaleString()}</strong><br>
                     Ganancia (Int): <strong style="color:var(--success);">$${h.total_earnings.toLocaleString()}</strong>
                 </td>
-                <td style="color: var(--text-muted); font-weight: 600;">$${i.balance.toLocaleString()}</td>
-                <td>
+                <td data-label="Capital" style="color: var(--text-muted); font-weight: 600;">$${i.balance.toLocaleString()}</td>
+                <td data-label="Acción">
                     <button onclick="shareWhatsApp('${i.name}', '${i.phone}', ${i.balance}, 'investor')" style="background:#25d366; color:white; border:none; padding: 0.3rem 0.6rem; border-radius:0.3rem; cursor:pointer; width:auto;">WhatsApp</button>
                 </td>
             </tr>`;
@@ -435,6 +442,13 @@ async function updateInvestorsList() {
 }
 
 function showSection(section) {
+    const aside = document.querySelector('aside');
+    const overlay = document.querySelector('.sidebar-overlay');
+    if (aside.classList.contains('open')) {
+        aside.classList.remove('open');
+        overlay.classList.remove('show');
+    }
+
     ['overview', 'clients', 'loans', 'audit', 'expenses', 'client-detail', 'investors'].forEach(s => {
         const el = document.getElementById(`${s}-section`);
         if (el) el.style.display = (s === section) ? 'block' : 'none';
@@ -449,7 +463,9 @@ function showSection(section) {
             expenses: 'Control de Gastos',
             investors: 'Gestión de Inversionistas'
         };
-        document.getElementById('section-title').textContent = titles[section];
+        const titleEl = document.getElementById('section-title');
+        if (titleEl) titleEl.textContent = titles[section];
+        
         document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
         const navItem = document.querySelector(`nav a[onclick*="${section}"]`);
         if (navItem) navItem.classList.add('active');
@@ -468,7 +484,7 @@ async function updateExpensesList() {
     tbody.innerHTML = '';
     expenses.forEach(e => {
         const date = new Date(e.date).toLocaleDateString();
-        tbody.innerHTML += `<tr><td>${date}</td><td>${e.description}</td><td style="color: var(--danger);">-$${e.amount.toLocaleString()}</td></tr>`;
+        tbody.innerHTML += `<tr><td data-label="Fecha">${date}</td><td data-label="Descripción">${e.description}</td><td data-label="Monto" style="color: var(--danger);">-$${e.amount.toLocaleString()}</td></tr>`;
     });
 }
 

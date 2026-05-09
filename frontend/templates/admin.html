@@ -12,7 +12,7 @@
         window.userRole = "{{ request.session.role }}";
     </script>
 </head>
-<body>
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
     <div class="dashboard">
         <aside>
             <div class="logo">
@@ -34,6 +34,9 @@
 
         <main>
             <header>
+                <div class="menu-toggle" onclick="toggleSidebar()">
+                    <i data-lucide="menu"></i>
+                </div>
                 <h2 id="section-title">Resumen Financiero</h2>
                 <div class="actions">
                     <button onclick="window.location='/api/reports/export'" class="btn-outline btn-auto" style="padding: 0.6rem 1.2rem;">Exportar Excel</button>
