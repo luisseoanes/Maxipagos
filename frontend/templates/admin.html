@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MaxiPagos - Sistema Profesional</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=2.0">
+    <link rel="stylesheet" href="/static/css/style.css?v=3.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -14,7 +14,11 @@
 </head>
     <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
     <div class="dashboard">
-        <aside>
+        <aside id="mobile-sidebar">
+            <div class="sidebar-header" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <span style="font-weight: 800; font-size: 1.2rem;">Menú</span>
+                <i data-lucide="x" onclick="toggleSidebar()" style="cursor: pointer;"></i>
+            </div>
             <div class="logo">
                 <i data-lucide="shield-check"></i>
                 MaxiPagos

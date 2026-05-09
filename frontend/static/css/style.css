@@ -388,16 +388,21 @@ header h2 {
     }
     aside {
         position: fixed;
-        left: -100%;
+        left: -300px; /* Fully off-screen */
         top: 0;
         bottom: 0;
         width: 280px;
         z-index: 2000;
-        transition: 0.3s ease;
-        box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 10px 0 30px rgba(0,0,0,0.2);
+        padding: 2rem 1.5rem !important;
+        display: block !important;
     }
     aside.open {
-        left: 0;
+        transform: translateX(300px);
+    }
+    .sidebar-header {
+        display: flex !important;
     }
     .sidebar-overlay {
         display: none;
@@ -437,7 +442,13 @@ header h2 {
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 0.5rem;
+        width: 42px;
+        height: 42px;
+        background: white;
+        color: var(--primary);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        margin-right: 0.75rem;
     }
     .actions {
         display: flex;
@@ -449,8 +460,9 @@ header h2 {
     .actions button, .btn-auto {
         width: 100% !important;
         flex: 1;
-        min-width: 120px;
-        padding: 0.8rem 1rem !important;
+        min-width: 140px;
+        padding: 0.65rem 1rem !important;
+        font-size: 0.85rem !important;
     }
     .modal-content {
         padding: 1.5rem;
