@@ -322,8 +322,54 @@ header h2 {
 }
 .btn-outline:hover { background: #f8fafc; }
 
+/* Responsive Utilities */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+}
+
+.grid-2-gap-1 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.stats-grid-sm {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.btn-auto {
+    width: auto;
+}
+
+.search-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.flex-wrap-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
 /* Responsive Media Queries */
 @media (max-width: 768px) {
+    .login-container {
+        padding: 1rem;
+    }
     .dashboard {
         grid-template-columns: 1fr;
     }
@@ -353,15 +399,52 @@ header h2 {
         align-items: flex-start;
         gap: 1rem;
     }
+    header h2 {
+        font-size: 1.25rem;
+    }
     .actions {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
+        width: 100%;
+    }
+    .actions button, .btn-auto {
+        width: 100% !important;
+        flex: 1;
+        min-width: 100px;
     }
     .modal-content {
         padding: 1.5rem;
         margin: 1rem;
         max-width: calc(100% - 2rem);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .grid-2, .grid-3, .grid-2-gap-1, .stats-grid-sm {
+        grid-template-columns: 1fr !important;
+    }
+    .search-bar {
+        flex-direction: column;
+    }
+    .search-bar button {
+        width: 100% !important;
+    }
+    .flex-wrap-between {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .flex-wrap-between > div {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    .flex-wrap-between input, .flex-wrap-between select {
+        width: 100%;
+    }
+    .chart-container {
+        height: 300px;
+        padding: 1rem;
     }
 }
 
